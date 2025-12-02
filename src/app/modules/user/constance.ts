@@ -1,3 +1,2 @@
-export const adminFiltarableFields = ['email', 'contactNumber', 'searchTerm']
-export const adminSearchableFields = ['name','email']
-export const paginationFields = ['page','limit','sortBy', 'sortOrder']
+export const userSearchableFields = ['name', 'email'];
+export const userFiltarableFields = ['email', 'status', 'role', 'searchTerm'];

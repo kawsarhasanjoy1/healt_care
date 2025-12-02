@@ -2,6 +2,7 @@ import 'dotenv/config'
 import { Router } from "express";
 import { userRouter } from "../modules/user/route.js";
 import { adminRouter } from '../modules/admin/route.js';
+import { authRouter } from '../modules/Auth/route.js';
 
 
 const routerPath = [
@@ -12,6 +13,10 @@ const routerPath = [
     {
         path: '/admin',
         router: adminRouter
+    },
+    {
+        path: '/auth',
+        router: authRouter
     },
 ]
 

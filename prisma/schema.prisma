@@ -17,22 +17,23 @@ model Users {
   id              String     @id @default(uuid())
   name            String
   email           String     @unique()
-  password        String
-  profilePhoto String
-  contactNumber String
-  needPasswordCng Boolean    @default(false)
-  role            userRole
-  status          userStatus
+  password        String     @default("123456")
+  profilePhoto    String     @default("")
+  contactNumber   String
+  needPasswordCng Boolean    @default(true)
+  role            userRole   @default(PATIANT)
+  status          userStatus @default(ACTIVE)
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
   admin           Admin?
+  doctor          Doctor?
 }
 
 model Admin {
   id            String   @id @default(uuid())
   name          String
   email         String   @unique()
-  profilePhoto  String
+  profilePhoto  String   @default("")
   contactNumber String
   isDeleted     Boolean  @default(false)
   createdAt     DateTime @default(now())
@@ -40,8 +41,27 @@ model Admin {
   user          Users    @relation(fields: [email], references: [email])
 }
 
+model Doctor {
+  id                  String   @id @default(uuid())
+  name                String
+  email               String   @unique()
+  contactNumber       String
+  profilePhoto        String   @default("")
+  address             String?
+  registrationNumber  String
+  experience          Int      @default(0)
+  gender              Gender
+  appoinmentFee       String
+  qualification       String
+  currentWorkingPlace String
+  designation         String
+  isDeleted           Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  user                Users    @relation(fields: [email], references: [email])
+}
 
- enum userRole {
+enum userRole {
   SUPER_ADMIN
   ADMIN
   PATIANT
@@ -52,4 +72,9 @@ enum userStatus {
   ACTIVE
   BLOCKED
   DELETED
+}
+
+enum Gender {
+  MALE
+  FEMALE
 }

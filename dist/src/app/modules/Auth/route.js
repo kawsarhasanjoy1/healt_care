@@ -1,0 +1,11 @@
+import { Router } from "express";
+import { authController } from "./controller.js";
+import auth from "../../middleware/auth.js";
+import { userRole } from "../../constance/global.js";
+const router = Router();
+router.post('/login', authController.loginUser);
+router.post('/refresh-token', authController.refreshToken);
+router.post('/change-password', auth(userRole.ADMIN, userRole.SUPER_ADMIN, userRole.PATIANT, userRole.SUPER_ADMIN), authController.changePassword);
+router.post('/forgot-password', authController.forgatePassword);
+router.post('/reset-password', authController.resetPassword);
+export const authRouter = router;

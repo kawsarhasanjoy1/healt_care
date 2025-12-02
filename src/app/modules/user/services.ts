@@ -1,25 +1,44 @@
 import bcrypt from 'bcrypt';
 import { userRole } from '../../constance/global.js'; 
-import { adminSearchableFields } from './constance.js';
 import { calculatePagination } from '../../../helpers/paginationHelpers.js';
 import prisma from '../../../shared/prisma.js';
 import { Prisma, userStatus } from '../../../../generated/prisma/client.js';
+import { TCloudinaryUploadResponse, TMulterFile, TPagination } from '../../../interface/global.js';
+import { imageUploadeIntoCloudinary } from '../../../helpers/multer.js';
+import { TAdminPayload, TDoctorPayload, TFilter } from './interface.js';
+import { userSearchableFields } from './constance.js';
+import { AppError } from '../../middleware/AppError.js';
+import { StatusCodes } from 'http-status-codes';
 
-type CreateAdminPayload = {
-  password: string;
-  admin: {
-    name: string;
-    email: string;
-    profilePhoto: string;
-    contactNumber: string;
-    needPasswordCng?: boolean;
-    status: 'ACTIVE' | 'BLOCKED';
-  };
-};
 
-export const createAdmin = async (payload: CreateAdminPayload) => {
+
+
+
+const getMe = async(payload: any) => {
+  const mapModel = {
+  [userRole.ADMIN] : prisma.admin,
+  [userRole.DOCTOR] : prisma.doctor,
+  [userRole.PATIANT] : prisma.users,
+  [userRole.SUPER_ADMIN] : prisma.users,
+} as any;
+
+  const profileInfo = await prisma.users.findFirstOrThrow({where: {id: payload?.id}})
+  const model = mapModel[profileInfo?.role];
+  if (!model) {
+   throw new AppError(StatusCodes.CONFLICT,'invalid role');
+  }
+  const userInfo = await model.findUnique({where: {email: profileInfo.email}})
+  return {...profileInfo,...userInfo}
+}
+
+
+
+ const createAdmin = async (payload: TAdminPayload,file:TMulterFile | undefined) => {
   const { admin , password } = payload;
-
+  if (file) {
+    const cloudinary: TCloudinaryUploadResponse | any = await imageUploadeIntoCloudinary(file);
+    payload.admin.profilePhoto = cloudinary.secure_url;
+  }
   const hashPass = await bcrypt.hash(password, 10);
 
   const result = await prisma.$transaction(async (tx) => {
@@ -28,9 +47,9 @@ export const createAdmin = async (payload: CreateAdminPayload) => {
         name: admin.name,
         email: admin.email,
         password: hashPass,
-        profilePhoto: admin.profilePhoto,
+        profilePhoto: payload.admin.profilePhoto,
         contactNumber: admin.contactNumber,
-        needPasswordCng: admin.needPasswordCng ?? false,
+        needPasswordCng: admin.needPasswordCng,
         role: userRole.ADMIN,           
         status: admin.status,           
       },
@@ -40,7 +59,7 @@ export const createAdmin = async (payload: CreateAdminPayload) => {
       data: {
         name: admin.name,
         email: admin.email,             
-        profilePhoto: admin.profilePhoto,
+        profilePhoto: payload.admin.profilePhoto,
         contactNumber: admin.contactNumber,
       },
     });
@@ -50,17 +69,61 @@ export const createAdmin = async (payload: CreateAdminPayload) => {
 
   return result;
 };
+ const createDoctor = async (payload: TDoctorPayload,file:TMulterFile | undefined) => {
+  const { doctor , password } = payload;
+  if (file) {
+    const cloudinary: TCloudinaryUploadResponse | any = await imageUploadeIntoCloudinary(file);
+    payload.doctor.profilePhoto = cloudinary.secure_url;
+  }
+  const hashPass = await bcrypt.hash(password, 10);
+
+  const result = await prisma.$transaction(async (tx) => {
+    const user = await tx.users.create({
+      data: {
+        name: doctor.name,
+        email: doctor.email,
+        password: hashPass,
+        profilePhoto: payload.doctor.profilePhoto,
+        contactNumber: doctor.contactNumber,
+        role: userRole.DOCTOR,                   
+      },
+    });
+
+    const doctorRes = await tx.doctor.create({
+      data: {
+        name: doctor.name,
+        email: doctor.email,             
+        contactNumber: doctor.contactNumber,
+        profilePhoto: doctor.profilePhoto,
+        address: doctor.address,
+        registrationNumber: doctor.registrationNumber,
+        experience: doctor.experience,
+        gender: doctor.gender,
+        appoinmentFee: doctor.appoinmentFee,
+        qualification : doctor.qualification,
+        currentWorkingPlace: doctor.currentWorkingPlace,
+        designation: doctor.designation,
+        isDeleted: doctor.isDeleted
+      },
+    });
+
+    return { user, doctor: doctorRes };
+  });
+
+  return result;
+};
 
 
 
 
-const userFromDB = async(query: Record<string,any>,options: Record<string,any>) => {
+const userFromDB = async(query: Partial<TFilter | any>,options: Partial<TPagination>) => {
     const {searchTerm, ...filter } = query;
+
     const { page , limit, skip, sortOrder, sortBy} = calculatePagination(options);
     const andCondition = []
     if (searchTerm) {
        andCondition.push({
-         OR: adminSearchableFields.map((field) => ({
+         OR: userSearchableFields.map((field) => ({
                 [field]: { contains: searchTerm , mode: 'insensitive'}
         }))
        }) 
@@ -78,6 +141,20 @@ const userFromDB = async(query: Record<string,any>,options: Record<string,any>) 
  
     const whereCondition: Prisma.UsersWhereInput = { AND: andCondition };
     const result = await prisma.users.findMany({ where: whereCondition,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      profilePhoto: true,
+      contactNumber: true,
+      role: true,
+      needPasswordCng: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+      doctor: true,
+      admin: true
+    },
     skip,
     take: limit,
     orderBy: sortBy && sortOrder ? {[sortBy]: sortOrder} : {createdAt: "desc"}
@@ -99,5 +176,24 @@ const getByIdFromDB = async(id: any) => {
   const result = await prisma.users.findUniqueOrThrow({where: {id, status: userStatus.ACTIVE}}) 
   return result
 }
+const updateStatus = async(id: string,  status: userStatus) => {
+  const isExistUser = await prisma.users.findUniqueOrThrow({where: {id: id}})
+  if (!isExistUser) {
+    throw new AppError(StatusCodes.NOT_FOUND , 'user not found')
+  }
+  const result = await prisma.users.update({where: {id: id}, data: {status: status}}) 
+  return result
+}
 
-export const userServices = { createAdmin , userFromDB , getByIdFromDB};
+
+
+
+
+export const userServices = { 
+  getMe,
+  createAdmin ,
+  createDoctor,
+  userFromDB , 
+  getByIdFromDB,
+  updateStatus,
+};

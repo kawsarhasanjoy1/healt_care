@@ -1,7 +1,7 @@
 import { Admin, Prisma, userStatus } from "../../../../generated/prisma/client.js";
 import { calculatePagination } from "../../../helpers/paginationHelpers.js";
 import prisma from "../../../shared/prisma.js";
-import { adminSearchableFields } from "../user/constance.js";
+import { adminSearchableFields } from "./constance.js";
 
 
 const adminFromDB = async(query: Record<string,any>,options: Record<string,any>) => {

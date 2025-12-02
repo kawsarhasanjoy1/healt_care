@@ -40,6 +40,7 @@ export const JsonNull = runtime.objectEnumValues.instances.JsonNull;
 export const AnyNull = runtime.objectEnumValues.instances.AnyNull;
 export const ModelName = {
     Users: 'Users',
+    Patient: 'Patient',
     Admin: 'Admin',
     Doctor: 'Doctor'
 };
@@ -62,6 +63,17 @@ export const UsersScalarFieldEnum = {
     needPasswordCng: 'needPasswordCng',
     role: 'role',
     status: 'status',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+export const PatientScalarFieldEnum = {
+    id: 'id',
+    email: 'email',
+    name: 'name',
+    profilePhoto: 'profilePhoto',
+    contactNumber: 'contactNumber',
+    address: 'address',
+    isDeleted: 'isDeleted',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
 };

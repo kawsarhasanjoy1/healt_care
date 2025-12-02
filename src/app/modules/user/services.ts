@@ -4,7 +4,7 @@ import { calculatePagination } from '../../../helpers/paginationHelpers.js';
 import prisma from '../../../shared/prisma.js';
 import { Prisma, userStatus } from '../../../../generated/prisma/client.js';
 import { TCloudinaryUploadResponse, TMulterFile, TPagination } from '../../../interface/global.js';
-import { imageUploadeIntoCloudinary } from '../../../helpers/multer.js';
+import { imageUploadeIntoCloudinary, upload } from '../../../helpers/multer.js';
 import { TAdminPayload, TDoctorPayload, TFilter } from './interface.js';
 import { userSearchableFields } from './constance.js';
 import { AppError } from '../../middleware/AppError.js';
@@ -69,6 +69,10 @@ const getMe = async(payload: any) => {
 
   return result;
 };
+
+
+
+
  const createDoctor = async (payload: TDoctorPayload,file:TMulterFile | undefined) => {
   const { doctor , password } = payload;
   if (file) {
@@ -111,6 +115,42 @@ const getMe = async(payload: any) => {
   });
 
   return result;
+};
+
+
+
+const createPatient = async (payload: any, file?: TMulterFile) => {
+   
+  const {patient,password} = payload;
+
+    if (file) {
+        const cloudinary: TCloudinaryUploadResponse | any = await imageUploadeIntoCloudinary(file);
+        payload.patient.profilePhoto = cloudinary?.secure_url;
+    }
+    const hashPass: string = await bcrypt.hash(password, 12)
+
+    const userData = {
+        name: patient.name,
+        email: patient.email,
+        password: hashPass,
+        profilePhoto: patient.profilePhoto,
+        contactNumber: patient.contactNumber,
+        role: userRole.DOCTOR, 
+    }
+
+    const result = await prisma.$transaction(async (transactionClient) => {
+        await transactionClient.users.create({
+            data: userData
+        });
+
+        const createdPatientData = await transactionClient.patient.create({
+            data: patient
+        });
+
+        return createdPatientData;
+    });
+
+    return result;
 };
 
 
@@ -193,6 +233,7 @@ export const userServices = {
   getMe,
   createAdmin ,
   createDoctor,
+  createPatient,
   userFromDB , 
   getByIdFromDB,
   updateStatus,

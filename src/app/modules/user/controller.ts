@@ -46,7 +46,16 @@ const createDoctor = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
+const createPatient = catchAsync(async (req: Request, res: Response) => {
+  const payload = req.body;
+  const file:TMulterFile | undefined = req.file;
+  const result = await userServices.createPatient(payload, file);
+    sendResponse(res, {
+        status: StatusCodes.OK,
+        message: "Patient Created successfuly!",
+        data: result
+    })
+});
 
 
 const userFromDB = catchAsync(async (req: Request, res: Response) => {
@@ -93,6 +102,7 @@ const updateStatus = catchAsync(async (req: Request, res: Response) => {
 export const userController = {
   createAdmin,
   createDoctor,
+  createPatient,
   userFromDB,
   getByIdFromDB,
   updateStatus,

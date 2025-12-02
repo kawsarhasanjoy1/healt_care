@@ -93,6 +93,32 @@ const createDoctor = async (payload, file) => {
     });
     return result;
 };
+const createPatient = async (payload, file) => {
+    const { patient, password } = payload;
+    if (file) {
+        const cloudinary = await imageUploadeIntoCloudinary(file);
+        payload.patient.profilePhoto = cloudinary?.secure_url;
+    }
+    const hashPass = await bcrypt.hash(password, 12);
+    const userData = {
+        name: patient.name,
+        email: patient.email,
+        password: hashPass,
+        profilePhoto: patient.profilePhoto,
+        contactNumber: patient.contactNumber,
+        role: userRole.DOCTOR,
+    };
+    const result = await prisma.$transaction(async (transactionClient) => {
+        await transactionClient.users.create({
+            data: userData
+        });
+        const createdPatientData = await transactionClient.patient.create({
+            data: patient
+        });
+        return createdPatientData;
+    });
+    return result;
+};
 const userFromDB = async (query, options) => {
     const { searchTerm, ...filter } = query;
     const { page, limit, skip, sortOrder, sortBy } = calculatePagination(options);
@@ -159,6 +185,7 @@ export const userServices = {
     getMe,
     createAdmin,
     createDoctor,
+    createPatient,
     userFromDB,
     getByIdFromDB,
     updateStatus,

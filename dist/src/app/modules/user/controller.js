@@ -33,6 +33,16 @@ const createDoctor = catchAsync(async (req, res) => {
         data: result,
     });
 });
+const createPatient = catchAsync(async (req, res) => {
+    const payload = req.body;
+    const file = req.file;
+    const result = await userServices.createPatient(payload, file);
+    sendResponse(res, {
+        status: StatusCodes.OK,
+        message: "Patient Created successfuly!",
+        data: result
+    });
+});
 const userFromDB = catchAsync(async (req, res) => {
     const query = req.query;
     const options = pick(query, paginationFields);
@@ -67,6 +77,7 @@ const updateStatus = catchAsync(async (req, res) => {
 export const userController = {
     createAdmin,
     createDoctor,
+    createPatient,
     userFromDB,
     getByIdFromDB,
     updateStatus,

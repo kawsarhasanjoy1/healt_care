@@ -9,7 +9,7 @@ import config from '../../../config/config.js';
 import { AppError } from '../../middleware/AppError.js';
 import { StatusCodes } from 'http-status-codes';
 import sendEmail from '../../../shared/sendEmail.js';
-import { userStatus } from '../../../../generated/prisma/enums.js';
+import { userStatus } from '@prisma/client';
 
 const loginUser = async(payload: TLogin) => {
 const {email,password} = payload;

@@ -1,5 +1,5 @@
+import { userRole } from "@prisma/client";
 import jwt, { Secret } from "jsonwebtoken";
-import { userRole } from "../../generated/prisma/enums.js";
 
 type TTokenData = {
     id: string;

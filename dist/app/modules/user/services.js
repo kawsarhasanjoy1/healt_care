@@ -2,11 +2,11 @@ import bcrypt from 'bcrypt';
 import { userRole } from '../../constance/global.js';
 import { calculatePagination } from '../../../helpers/paginationHelpers.js';
 import prisma from '../../../shared/prisma.js';
-import { userStatus } from '../../../../generated/prisma/client.js';
 import { imageUploadeIntoCloudinary } from '../../../helpers/multer.js';
 import { userSearchableFields } from './constance.js';
 import { AppError } from '../../middleware/AppError.js';
 import { StatusCodes } from 'http-status-codes';
+import { userStatus } from '@prisma/client';
 const getMe = async (payload) => {
     const mapModel = {
         [userRole.ADMIN]: prisma.admin,
@@ -29,8 +29,8 @@ const createAdmin = async (payload, file) => {
         payload.admin.profilePhoto = cloudinary.secure_url;
     }
     const hashPass = await bcrypt.hash(password, 10);
-    const result = await prisma.$transaction(async (tx) => {
-        const user = await tx.users.create({
+    const result = await prisma.$transaction(async (transactionClient) => {
+        const user = await transactionClient.users.create({
             data: {
                 name: admin.name,
                 email: admin.email,
@@ -42,7 +42,7 @@ const createAdmin = async (payload, file) => {
                 status: admin.status,
             },
         });
-        const adminRow = await tx.admin.create({
+        const adminRow = await transactionClient.admin.create({
             data: {
                 name: admin.name,
                 email: admin.email,
@@ -61,8 +61,8 @@ const createDoctor = async (payload, file) => {
         payload.doctor.profilePhoto = cloudinary.secure_url;
     }
     const hashPass = await bcrypt.hash(password, 10);
-    const result = await prisma.$transaction(async (tx) => {
-        const user = await tx.users.create({
+    const result = await prisma.$transaction(async (transactionClient) => {
+        const user = await transactionClient.users.create({
             data: {
                 name: doctor.name,
                 email: doctor.email,
@@ -72,7 +72,7 @@ const createDoctor = async (payload, file) => {
                 role: userRole.DOCTOR,
             },
         });
-        const doctorRes = await tx.doctor.create({
+        const doctorRes = await transactionClient.doctor.create({
             data: {
                 name: doctor.name,
                 email: doctor.email,

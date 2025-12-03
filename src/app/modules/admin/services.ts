@@ -1,4 +1,4 @@
-import { Admin, Prisma, userStatus } from "../../../../generated/prisma/client.js";
+import { Admin, Prisma, userStatus } from "@prisma/client"
 import { calculatePagination } from "../../../helpers/paginationHelpers.js";
 import prisma from "../../../shared/prisma.js";
 import { adminSearchableFields } from "./constance.js";

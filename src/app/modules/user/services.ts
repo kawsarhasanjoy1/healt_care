@@ -2,13 +2,15 @@ import bcrypt from 'bcrypt';
 import { userRole } from '../../constance/global.js'; 
 import { calculatePagination } from '../../../helpers/paginationHelpers.js';
 import prisma from '../../../shared/prisma.js';
-import { Prisma, userStatus } from '../../../../generated/prisma/client.js';
 import { TCloudinaryUploadResponse, TMulterFile, TPagination } from '../../../interface/global.js';
 import { imageUploadeIntoCloudinary, upload } from '../../../helpers/multer.js';
 import { TAdminPayload, TDoctorPayload, TFilter } from './interface.js';
 import { userSearchableFields } from './constance.js';
 import { AppError } from '../../middleware/AppError.js';
 import { StatusCodes } from 'http-status-codes';
+import { Prisma, userStatus } from '@prisma/client';
+
+
 
 
 
@@ -41,8 +43,8 @@ const getMe = async(payload: any) => {
   }
   const hashPass = await bcrypt.hash(password, 10);
 
-  const result = await prisma.$transaction(async (tx) => {
-    const user = await tx.users.create({
+  const result = await prisma.$transaction(async (transactionClient: any) => {
+    const user = await transactionClient.users.create({
       data: {
         name: admin.name,
         email: admin.email,
@@ -55,7 +57,7 @@ const getMe = async(payload: any) => {
       },
     });
 
-    const adminRow = await tx.admin.create({
+    const adminRow = await transactionClient.admin.create({
       data: {
         name: admin.name,
         email: admin.email,             
@@ -81,8 +83,8 @@ const getMe = async(payload: any) => {
   }
   const hashPass = await bcrypt.hash(password, 10);
 
-  const result = await prisma.$transaction(async (tx) => {
-    const user = await tx.users.create({
+  const result = await prisma.$transaction(async (transactionClient: any) => {
+    const user = await transactionClient.users.create({
       data: {
         name: doctor.name,
         email: doctor.email,
@@ -93,7 +95,7 @@ const getMe = async(payload: any) => {
       },
     });
 
-    const doctorRes = await tx.doctor.create({
+    const doctorRes = await transactionClient.doctor.create({
       data: {
         name: doctor.name,
         email: doctor.email,             
@@ -138,7 +140,7 @@ const createPatient = async (payload: any, file?: TMulterFile) => {
         role: userRole.DOCTOR, 
     }
 
-    const result = await prisma.$transaction(async (transactionClient) => {
+    const result = await prisma.$transaction(async (transactionClient: any) => {
         await transactionClient.users.create({
             data: userData
         });

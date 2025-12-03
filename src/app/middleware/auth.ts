@@ -1,11 +1,11 @@
 import { NextFunction, Request,Response } from "express"
 import { verifyToken } from "../../utils/verifyToken.js";
 import config from "../../config/config.js";
-import { userRole } from "../../../generated/prisma/enums.js";
 import { JwtPayload } from "jsonwebtoken";
 import prisma from "../../shared/prisma.js";
 import { AppError } from "./AppError.js";
 import { StatusCodes } from "http-status-codes";
+import { userRole } from "@prisma/client";
 
 const auth = (...userRole: userRole[] ) => {
  return async(req: Request,res: Response,next: NextFunction) => {

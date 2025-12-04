@@ -64,6 +64,17 @@ const getByIdFromDB = catchAsync(async (req, res) => {
         data: result,
     });
 });
+const updateProfile = catchAsync(async (req, res) => {
+    const file = req.file;
+    const user = req.user;
+    const data = req.body;
+    const result = await userServices.updateProfile(user, data, file);
+    sendResponse(res, {
+        status: StatusCodes.OK,
+        message: "profile updated successfully",
+        data: result,
+    });
+});
 const updateStatus = catchAsync(async (req, res) => {
     const id = req.params.id;
     const { status } = req.body;
@@ -81,5 +92,6 @@ export const userController = {
     userFromDB,
     getByIdFromDB,
     updateStatus,
-    getMe
+    getMe,
+    updateProfile
 };

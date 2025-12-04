@@ -7,10 +7,9 @@ generator client {
   provider = "prisma-client-js"
 }
 
-
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -28,7 +27,7 @@ model Users {
   updatedAt       DateTime   @updatedAt
   admin           Admin?
   doctor          Doctor?
-  patient Patient?
+  patient         Patient?
 }
 
 model Patient {
@@ -58,23 +57,40 @@ model Admin {
 }
 
 model Doctor {
-  id                  String   @id @default(uuid())
+  id                  String              @id @default(uuid())
   name                String
-  email               String   @unique()
+  email               String              @unique()
   contactNumber       String
-  profilePhoto        String   @default("")
+  profilePhoto        String              @default("")
   address             String?
   registrationNumber  String
-  experience          Int      @default(0)
+  experience          Int                 @default(0)
   gender              Gender
   appoinmentFee       String
   qualification       String
   currentWorkingPlace String
   designation         String
-  isDeleted           Boolean  @default(false)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  user                Users    @relation(fields: [email], references: [email])
+  isDeleted           Boolean             @default(false)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  user                Users               @relation(fields: [email], references: [email])
+  doctorSpecialties   DoctorSpecialties[]
+}
+
+model Specialties {
+  id                String              @id @default(uuid())
+  title             String
+  icon              String
+  doctorSpecialties DoctorSpecialties[]
+}
+
+model DoctorSpecialties {
+  specialtiesId String
+  specialties   Specialties @relation(fields: [specialtiesId], references: [id])
+  doctorId      String
+  doctors       Doctor      @relation(fields: [doctorId], references: [id])
+
+  @@id([specialtiesId, doctorId])
 }
 
 enum userRole {

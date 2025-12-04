@@ -16,5 +16,6 @@ router.post('/create-doctor', upload.single('file'), parseData, (req, res, next)
     userZodValidationSchema.adminZodValidationSchema.parseAsync({ body: req.body.doctor }), next();
 }, userController.createDoctor);
 router.post("/create-patient", upload.single('file'), parseData, userController.createPatient);
+router.patch('/update-my-profile', upload.single('file'), parseData, auth(userRole.SUPER_ADMIN, userRole.ADMIN, userRole.DOCTOR, userRole.PATIANT), userController.updateProfile);
 router.patch('/:id', userController.updateStatus);
 export const userRouter = router;

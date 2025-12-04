@@ -25,6 +25,7 @@ router.post(
     userController.createPatient  
 );
 
+router.patch('/update-my-profile',upload.single('file'),parseData,auth(userRole.SUPER_ADMIN,userRole.ADMIN,userRole.DOCTOR,userRole.PATIANT), userController.updateProfile)
 router.patch('/:id', userController.updateStatus)
 
 

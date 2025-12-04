@@ -3,5 +3,4 @@
   ADMIN: 'ADMIN',
   PATIANT: 'PATIANT',
   DOCTOR: 'DOCTOR',
-  USER: 'USER'
 } as const

@@ -3,5 +3,4 @@ export const userRole = {
     ADMIN: 'ADMIN',
     PATIANT: 'PATIANT',
     DOCTOR: 'DOCTOR',
-    USER: 'USER'
 };

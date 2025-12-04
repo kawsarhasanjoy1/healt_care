@@ -12,17 +12,17 @@ import { Prisma, userStatus } from '@prisma/client';
 
 
 
+  const mapModel = {
+  [userRole.ADMIN] : prisma.admin,
+  [userRole.DOCTOR] : prisma.doctor,
+  [userRole.PATIANT] : prisma.patient,
+  [userRole.SUPER_ADMIN] : prisma.users,
+} as any;
 
 
 
 
 const getMe = async(payload: any) => {
-  const mapModel = {
-  [userRole.ADMIN] : prisma.admin,
-  [userRole.DOCTOR] : prisma.doctor,
-  [userRole.PATIANT] : prisma.users,
-  [userRole.SUPER_ADMIN] : prisma.users,
-} as any;
 
   const profileInfo = await prisma.users.findFirstOrThrow({where: {id: payload?.id}})
   const model = mapModel[profileInfo?.role];
@@ -32,8 +32,7 @@ const getMe = async(payload: any) => {
   const userInfo = await model.findUnique({where: {email: profileInfo.email}})
   return {...profileInfo,...userInfo}
 }
-
-
+ 
 
  const createAdmin = async (payload: TAdminPayload,file:TMulterFile | undefined) => {
   const { admin , password } = payload;
@@ -137,7 +136,7 @@ const createPatient = async (payload: any, file?: TMulterFile) => {
         password: hashPass,
         profilePhoto: patient.profilePhoto,
         contactNumber: patient.contactNumber,
-        role: userRole.DOCTOR, 
+        role: userRole.PATIANT, 
     }
 
     const result = await prisma.$transaction(async (transactionClient: any) => {
@@ -231,6 +230,88 @@ const updateStatus = async(id: string,  status: userStatus) => {
 
 
 
+const updateProfile = async (user: any, payload: any, file: TMulterFile) => {
+
+  const userInfo = await prisma.users.findUniqueOrThrow({
+    where: {
+      email: user?.email,
+    },
+  });
+
+
+  if (file) {
+    const uploadToCloudinary: TCloudinaryUploadResponse | any =
+      await imageUploadeIntoCloudinary(file);
+
+    payload.profilePhoto = uploadToCloudinary?.secure_url;
+  }
+
+
+  if ('email' in payload) {
+    delete payload.email;
+  }
+
+  const result = await prisma.$transaction(async (tx:any) => {
+
+    const userUpdateData: Prisma.UsersUpdateInput = {};
+
+    if (payload.name !== undefined) {
+      userUpdateData.name = payload.name;
+    }
+    if (payload.contactNumber !== undefined) {
+      userUpdateData.contactNumber = payload.contactNumber;
+    }
+    if (payload.profilePhoto !== undefined) {
+      userUpdateData.profilePhoto = payload.profilePhoto;
+    }
+
+    let updatedUser = userInfo;
+
+    if (Object.keys(userUpdateData).length > 0) {
+      updatedUser = await tx.users.update({
+        where: { email: userInfo.email },
+        data: userUpdateData,
+      });
+    }
+
+    let profileInfo: any;
+
+    if (
+      userInfo.role === userRole.SUPER_ADMIN ||
+      userInfo.role === userRole.ADMIN
+    ) {
+      profileInfo = await tx.admin.update({
+        where: { email: userInfo.email },
+        data: payload,
+      });
+    } else if (userInfo.role === userRole.DOCTOR) {
+      profileInfo = await tx.doctor.update({
+        where: { email: userInfo.email },
+        data: payload,
+      });
+    } else if (userInfo.role === userRole.PATIANT) {
+      profileInfo = await tx.patient.update({
+        where: { email: userInfo.email },
+        data: payload,
+      });
+    }
+
+    return {
+      user: updatedUser,
+      profile: profileInfo,
+    };
+  });
+
+
+  return {
+  
+    user: result.user,
+    profile: result.profile,
+  };
+};
+
+
+
 export const userServices = { 
   getMe,
   createAdmin ,
@@ -239,4 +320,5 @@ export const userServices = {
   userFromDB , 
   getByIdFromDB,
   updateStatus,
+  updateProfile
 };

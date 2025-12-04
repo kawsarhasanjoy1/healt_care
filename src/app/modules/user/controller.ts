@@ -12,7 +12,6 @@ import { userFiltarableFields } from "./constance.js";
 
 const getMe = catchAsync(async (req: Request, res: Response) => {
   const result = await userServices.getMe(req.user);
-
   sendResponse(res, {
     status: StatusCodes.OK,
     message: "fetched successful",
@@ -26,7 +25,6 @@ const createAdmin = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
   const file:TMulterFile | undefined = req.file;
   const result = await userServices.createAdmin(payload, file);
-
   sendResponse(res, {
     status: StatusCodes.CREATED,
     message: "Admin created successfully",
@@ -38,7 +36,6 @@ const createDoctor = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
   const file:TMulterFile | undefined = req.file;
   const result = await userServices.createDoctor(payload, file);
-
   sendResponse(res, {
     status: StatusCodes.CREATED,
     message: "Doctor created successfully",
@@ -63,7 +60,6 @@ const userFromDB = catchAsync(async (req: Request, res: Response) => {
   const options = pick(query, paginationFields);
   const filter = pick(query, userFiltarableFields);
   const result = await userServices.userFromDB(filter, options);
-
   sendResponse(res, {
     status: StatusCodes.OK,
     message: "Admins retrieved successfully",
@@ -78,10 +74,23 @@ const userFromDB = catchAsync(async (req: Request, res: Response) => {
 const getByIdFromDB = catchAsync(async (req: Request, res: Response) => {
   const id = req.params.id;
   const result = await userServices.getByIdFromDB(id);
-
   sendResponse(res, {
     status: StatusCodes.OK,
     message: "Single admin fetched successfully",
+    data: result,
+  });
+});
+
+
+
+const updateProfile = catchAsync(async (req: Request, res: Response) => {
+  const file = req.file as TMulterFile
+  const user = req.user;
+  const data = req.body;
+  const result = await userServices.updateProfile(user,data,file);
+  sendResponse(res, {
+    status: StatusCodes.OK,
+    message: "profile updated successfully",
     data: result,
   });
 });
@@ -90,13 +99,14 @@ const updateStatus = catchAsync(async (req: Request, res: Response) => {
   const id = req.params.id;
   const {status} = req.body;
   const result = await userServices.updateStatus(id,status);
-
   sendResponse(res, {
     status: StatusCodes.OK,
     message: "status updated successfully",
     data: result,
   });
 });
+
+
 
 
 export const userController = {
@@ -106,5 +116,6 @@ export const userController = {
   userFromDB,
   getByIdFromDB,
   updateStatus,
-  getMe
+  getMe,
+  updateProfile
 };

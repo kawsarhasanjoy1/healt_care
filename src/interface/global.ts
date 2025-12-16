@@ -11,10 +11,10 @@ export type TResponseData<T> = {
 
 
 export type TPagination = {
-    page: number,
-    limit: number,
-    sortBy: string,
-    sortOrder: string
+    page?: number,
+    limit?: number,
+    sortBy?: string,
+    sortOrder?: string
 }
 
 
@@ -51,4 +51,14 @@ export interface TCloudinaryUploadResponse {
   folder: string;
   original_filename: string;
   api_key: string;
+}
+
+
+export interface TAuthUser {
+  id: string;
+  email: string;
+  role: "DOCTOR" | "ADMIN" | "PATIENT" | "SUPER_ADMIN";
+  name: string;
+  iat: number; 
+  exp: number; 
 }

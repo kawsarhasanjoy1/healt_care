@@ -7,7 +7,7 @@ import { adminSearchableFields } from "./constance.js";
 const adminFromDB = async(query: Record<string,any>,options: Record<string,any>) => {
     const {searchTerm, ...filter } = query;
     const { page , limit, skip, sortOrder, sortBy} = calculatePagination(options);
-    const andCondition = []
+    const andCondition: Prisma.AdminWhereInput[] = []
     if (searchTerm) {
        andCondition.push({
          OR: adminSearchableFields.map((field) => ({

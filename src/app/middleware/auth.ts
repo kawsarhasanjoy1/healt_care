@@ -18,6 +18,7 @@ try{
 catch(err){
  throw new Error('you are not authorized')
 }
+
   const {id, email, role ,name } = decodeToken as JwtPayload;
   const user = await prisma.users.findUnique({where: {email,id,role}})
   if (!user) throw new Error('user not found')

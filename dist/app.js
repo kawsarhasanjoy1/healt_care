@@ -3,9 +3,9 @@ import cors from "cors";
 import cron from 'node-cron';
 import router from "./app/router/router.js";
 import notFound from "./app/middleware/notFound.js";
-import GlobalErrorHandler from "./app/middleware/GlobalErrorHandler.js";
 import cookieParser from 'cookie-parser';
 import { AppoinmentServices } from "./app/modules/Appoinment/services.js";
+import globalErrorHandler from "./app/middleware/GlobalErrorHandler.js";
 export const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -22,5 +22,5 @@ cron.schedule('* * * * *', () => {
 });
 app.use("/api/v1", router);
 app.use(notFound);
-app.use(GlobalErrorHandler);
+app.use(globalErrorHandler);
 export default app;

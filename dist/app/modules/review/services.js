@@ -1,0 +1,94 @@
+import prisma from "../../../shared/prisma.js";
+import { AppError } from "../../middleware/AppError.js";
+import { StatusCodes } from "http-status-codes";
+import { calculatePagination } from "../../../helpers/paginationHelpers.js";
+const createReview = async (user, payload) => {
+    const patientData = await prisma.patient.findUniqueOrThrow({
+        where: {
+            email: user.email
+        }
+    });
+    const appoinmentData = await prisma.appointment.findUniqueOrThrow({
+        where: {
+            id: payload.appoinmentId
+        }
+    });
+    if (!(patientData.id === appoinmentData.patientId)) {
+        throw new AppError(StatusCodes.BAD_REQUEST, "this is not your appoinment");
+    }
+    return await prisma.$transaction(async (tx) => {
+        const result = await tx.review.create({
+            data: {
+                appointmentId: appoinmentData.id,
+                doctorId: appoinmentData.doctorId,
+                patientId: appoinmentData.patientId,
+                rating: payload.rating,
+                comment: payload.comment
+            }
+        });
+        const averageRating = await tx.review.aggregate({
+            _avg: {
+                rating: true
+            }
+        });
+        await tx.doctor.update({
+            where: {
+                id: result.doctorId
+            },
+            data: {
+                averageRating: averageRating._avg.rating
+            }
+        });
+        return result;
+    });
+};
+const getReview = async (filters, options) => {
+    const { limit, page, skip } = calculatePagination(options);
+    const { patientEmail, doctorEmail } = filters;
+    const andConditions = [];
+    if (patientEmail) {
+        andConditions.push({
+            patient: {
+                email: patientEmail
+            }
+        });
+    }
+    if (doctorEmail) {
+        andConditions.push({
+            doctor: {
+                email: doctorEmail
+            }
+        });
+    }
+    const whereConditions = andConditions.length > 0 ? { AND: andConditions } : {};
+    const result = await prisma.review.findMany({
+        where: whereConditions,
+        skip,
+        take: limit,
+        orderBy: options.sortBy && options.sortOrder
+            ? { [options.sortBy]: options.sortOrder }
+            : {
+                createdAt: 'desc',
+            },
+        include: {
+            doctor: true,
+            patient: true,
+            //appointment: true,
+        },
+    });
+    const total = await prisma.review.count({
+        where: whereConditions,
+    });
+    return {
+        meta: {
+            total,
+            page,
+            limit,
+        },
+        data: result,
+    };
+};
+export const reviewServices = {
+    createReview,
+    getReview
+};

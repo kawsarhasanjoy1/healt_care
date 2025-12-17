@@ -1,0 +1,34 @@
+import { catchAsync } from "../../middleware/catchAsync.js";
+import { Request,Response } from "express";
+import { reviewServices } from "./services.js";
+import sendResponse from "../../../shared/sendResponse.js";
+import { StatusCodes } from "http-status-codes";
+import pick from "../../../shared/pick.js";
+import { paginationFields } from "../admin/constance.js";
+import { reviewFilterableFields } from "./constance.js";
+const createReview = catchAsync(async(req:Request,res:Response) => {
+const user = req.user;
+const data = req.body;
+const result = await reviewServices.createReview(user,data);
+sendResponse((res),{
+    status: StatusCodes.OK,
+    message: 'Review created successful',
+    data: result
+})
+})
+const getReview = catchAsync(async(req:Request,res:Response) => {
+const options = pick(req.query, paginationFields)
+const filters = pick(req.query, reviewFilterableFields)
+const result = await reviewServices.getReview(filters, options);
+sendResponse((res),{
+    status: StatusCodes.OK,
+    message: 'Review retried successful',
+    data: result
+})
+})
+
+
+export const reviewController = {
+    createReview,
+    getReview
+}

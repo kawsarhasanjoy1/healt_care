@@ -11,6 +11,7 @@ import { doctorSchedulesRouter } from '../modules/doctorSchedules/route.js';
 import { paymentRouter } from '../modules/payment/router.js';
 import { appoinmentRouter } from '../modules/Appoinment/router.js';
 import { prescriptionRouter } from '../modules/prescription/route.js';
+import { reviewRouter } from '../modules/review/route.js';
 const routerPath = [
     {
         path: '/user',
@@ -55,6 +56,10 @@ const routerPath = [
     {
         path: "/prescription",
         router: prescriptionRouter
+    },
+    {
+        path: "/reivew",
+        router: reviewRouter
     }
 ];
 const router = Router();

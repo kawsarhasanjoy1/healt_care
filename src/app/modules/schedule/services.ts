@@ -10,18 +10,24 @@ import { StatusCodes } from "http-status-codes";
 
 const createScheduleIntoDB = async (payload: TSchedule): Promise<Schedule[]> => {
     const { startDate, endDate, startTime, endTime } = payload;
-    const intervalTime = 30; // ৩০ মিনিটের স্লট
+    const intervalTime = 30; 
     const schedulesData: { startDateTime: Date; endDateTime: Date }[] = [];
 
-    const current = new Date(`${startDate}T00:00:00`);
-    const last = new Date(`${endDate}T00:00:00`);
+    // তারিখগুলোকে অবজেক্টে রূপান্তর (Local Time)
+    const current = new Date(startDate);
+    const last = new Date(endDate);
 
     while (current <= last) {
-        const dateString = current.toISOString().split('T')[0];
+        // তারিখ ফরম্যাট করা (YYYY-MM-DD) লোকাল টাইম অনুযায়ী
+        const year = current.getFullYear();
+        const month = String(current.getMonth() + 1).padStart(2, '0');
+        const day = String(current.getDate()).padStart(2, '0');
+        const dateString = `${year}-${month}-${day}`;
 
         let startDateTime = new Date(`${dateString}T${startTime}:00`);
         let endDateTime = new Date(`${dateString}T${endTime}:00`);
 
+        // যদি এন্ড টাইম পরের দিন চলে যায় (যেমন রাত ১১টা থেকে রাত ২টা)
         if (endDateTime <= startDateTime) {
             endDateTime.setDate(endDateTime.getDate() + 1);
         }
@@ -36,10 +42,13 @@ const createScheduleIntoDB = async (payload: TSchedule): Promise<Schedule[]> => 
 
             startDateTime = nextSlot;
         }
+        // তারিখ ১ দিন বাড়ানো
         current.setDate(current.getDate() + 1);
     }
 
-    // ১. ডাটাবেজ থেকে বিদ্যমান স্লটগুলো একবারে নিয়ে আসা (Optimization)
+    // বাকি লজিক (existing check & createMany) একই থাকবে...
+    // তবে নিশ্চিত করুন Prisma-তে ডাটা পাঠানোর সময় সেগুলো Date অবজেক্ট হিসেবেই আছে।
+    
     const existingSchedules = await prisma.schedule.findMany({
         where: {
             OR: schedulesData.map(slot => ({
@@ -49,36 +58,23 @@ const createScheduleIntoDB = async (payload: TSchedule): Promise<Schedule[]> => 
         }
     });
 
-    // ২. বিদ্যমান স্লটগুলোর একটি সেট তৈরি করা যাতে সহজে ফিল্টার করা যায়
-    const existingMap = new Set(
-        existingSchedules.map(s => s.startDateTime.getTime())
-    );
-
-    // ৩. শুধুমাত্র নতুন স্লটগুলো আলাদা করা
-    const newSchedules = schedulesData.filter(
-        slot => !existingMap.has(slot.startDateTime.getTime())
-    );
+    const existingMap = new Set(existingSchedules.map(s => s.startDateTime.getTime()));
+    const newSchedules = schedulesData.filter(slot => !existingMap.has(slot.startDateTime.getTime()));
 
     if (newSchedules.length === 0) {
-        throw new AppError(StatusCodes.CONFLICT, "All schedules already exist!");
+        throw new AppError(StatusCodes.CONFLICT, "সবগুলো শিডিউল আগে থেকেই বিদ্যমান!");
     }
 
-    // ৪. createMany ব্যবহার করে একবারে সেভ করা (Best Practice)
     await prisma.schedule.createMany({
         data: newSchedules,
-        skipDuplicates: true, // ডাটাবেজ লেভেলে ডুপ্লিকেট স্কিপ করবে
+        skipDuplicates: true,
     });
 
-    // ৫. সেভ করা ডাটাগুলো রিটার্ন করা
-    const result = await prisma.schedule.findMany({
+    return await prisma.schedule.findMany({
         where: {
-            OR: newSchedules.map(slot => ({
-                startDateTime: slot.startDateTime,
-            }))
+            OR: newSchedules.map(slot => ({ startDateTime: slot.startDateTime }))
         }
     });
-
-    return result;
 };
 const getSchedulesFromDB = async (
     filters: TFilterRequest,

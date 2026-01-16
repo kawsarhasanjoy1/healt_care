@@ -4,14 +4,20 @@ import { AppError } from "../../middleware/AppError.js";
 import { StatusCodes } from "http-status-codes";
 const createScheduleIntoDB = async (payload) => {
     const { startDate, endDate, startTime, endTime } = payload;
-    const intervalTime = 30; // ৩০ মিনিটের স্লট
+    const intervalTime = 30;
     const schedulesData = [];
     const current = new Date(`${startDate}T00:00:00`);
     const last = new Date(`${endDate}T00:00:00`);
     while (current <= last) {
-        const dateString = current.toISOString().split('T')[0];
+        const year = current.getFullYear();
+        const month = String(current.getMonth() + 1).padStart(2, "0");
+        const day = String(current.getDate()).padStart(2, "0");
+        const dateString = `${year}-${month}-${day}`;
         let startDateTime = new Date(`${dateString}T${startTime}:00`);
         let endDateTime = new Date(`${dateString}T${endTime}:00`);
+        if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
+            throw new AppError(StatusCodes.BAD_REQUEST, "Invalid time format received!");
+        }
         if (endDateTime <= startDateTime) {
             endDateTime.setDate(endDateTime.getDate() + 1);
         }
@@ -19,42 +25,35 @@ const createScheduleIntoDB = async (payload) => {
             const nextSlot = new Date(startDateTime.getTime() + intervalTime * 60000);
             schedulesData.push({
                 startDateTime: new Date(startDateTime),
-                endDateTime: nextSlot
+                endDateTime: nextSlot,
             });
             startDateTime = nextSlot;
         }
         current.setDate(current.getDate() + 1);
     }
-    // ১. ডাটাবেজ থেকে বিদ্যমান স্লটগুলো একবারে নিয়ে আসা (Optimization)
     const existingSchedules = await prisma.schedule.findMany({
         where: {
-            OR: schedulesData.map(slot => ({
+            OR: schedulesData.map((slot) => ({
                 startDateTime: slot.startDateTime,
-                endDateTime: slot.endDateTime
-            }))
-        }
+                endDateTime: slot.endDateTime,
+            })),
+        },
     });
-    // ২. বিদ্যমান স্লটগুলোর একটি সেট তৈরি করা যাতে সহজে ফিল্টার করা যায়
-    const existingMap = new Set(existingSchedules.map(s => s.startDateTime.getTime()));
-    // ৩. শুধুমাত্র নতুন স্লটগুলো আলাদা করা
-    const newSchedules = schedulesData.filter(slot => !existingMap.has(slot.startDateTime.getTime()));
+    const existingMap = new Set(existingSchedules.map((s) => s.startDateTime.getTime()));
+    const newSchedules = schedulesData.filter((slot) => !existingMap.has(slot.startDateTime.getTime()));
     if (newSchedules.length === 0) {
-        throw new AppError(StatusCodes.CONFLICT, "All schedules already exist!");
+        throw new AppError(StatusCodes.CONFLICT, "এই সময়ের সকল শিডিউল আগে থেকেই বিদ্যমান!");
     }
-    // ৪. createMany ব্যবহার করে একবারে সেভ করা (Best Practice)
     await prisma.schedule.createMany({
         data: newSchedules,
-        skipDuplicates: true, // ডাটাবেজ লেভেলে ডুপ্লিকেট স্কিপ করবে
+        skipDuplicates: true,
     });
-    // ৫. সেভ করা ডাটাগুলো রিটার্ন করা
-    const result = await prisma.schedule.findMany({
+    // সবশেষে ডাটা রিটার্ন
+    return await prisma.schedule.findMany({
         where: {
-            OR: newSchedules.map(slot => ({
-                startDateTime: slot.startDateTime,
-            }))
-        }
+            OR: newSchedules.map((slot) => ({ startDateTime: slot.startDateTime })),
+        },
     });
-    return result;
 };
 const getSchedulesFromDB = async (filters, options, user) => {
     const { limit, page, skip } = calculatePagination(options);
@@ -78,9 +77,9 @@ const getSchedulesFromDB = async (filters, options, user) => {
             doctorSchedules: {
                 some: {
                     doctorId: doctorId,
-                    isBooked: false
-                }
-            }
+                    isBooked: false,
+                },
+            },
         });
     }
     const whereConditions = andConditions.length > 0 ? { AND: andConditions } : {};
@@ -91,11 +90,11 @@ const getSchedulesFromDB = async (filters, options, user) => {
             take: limit,
             orderBy: options.sortBy && options.sortOrder
                 ? { [options.sortBy]: options.sortOrder }
-                : { startDateTime: 'asc' },
+                : { startDateTime: "asc" },
         }),
         prisma.schedule.count({
             where: whereConditions,
-        })
+        }),
     ]);
     return {
         meta: { total, page, limit },

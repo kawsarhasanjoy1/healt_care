@@ -2,34 +2,32 @@ import prisma from "../../../shared/prisma.js";
 import { calculatePagination } from "../../../helpers/paginationHelpers.js";
 import { AppError } from "../../middleware/AppError.js";
 import { StatusCodes } from "http-status-codes";
+import dayjs from 'dayjs';
 const createScheduleIntoDB = async (payload) => {
     const { startDate, endDate, startTime, endTime } = payload;
     const intervalTime = 30;
     const schedulesData = [];
-    const current = new Date(`${startDate}T00:00:00`);
-    const last = new Date(`${endDate}T00:00:00`);
-    while (current <= last) {
-        const year = current.getFullYear();
-        const month = String(current.getMonth() + 1).padStart(2, "0");
-        const day = String(current.getDate()).padStart(2, "0");
-        const dateString = `${year}-${month}-${day}`;
-        let startDateTime = new Date(`${dateString}T${startTime}:00`);
-        let endDateTime = new Date(`${dateString}T${endTime}:00`);
-        if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
-            throw new AppError(StatusCodes.BAD_REQUEST, "Invalid time format received!");
+    let current = dayjs(startDate);
+    const last = dayjs(endDate);
+    while (current.isBefore(last) || current.isSame(last, "day")) {
+        const dateString = current.format("YYYY-MM-DD");
+        let startDateTime = dayjs(`${dateString}T${startTime}:00`);
+        let endDateTime = dayjs(`${dateString}T${endTime}:00`);
+        if (!startDateTime.isValid() || !endDateTime.isValid()) {
+            throw new AppError(StatusCodes.BAD_REQUEST, "Invalid time format!");
         }
-        if (endDateTime <= startDateTime) {
-            endDateTime.setDate(endDateTime.getDate() + 1);
+        if (endDateTime.isBefore(startDateTime) || endDateTime.isSame(startDateTime)) {
+            endDateTime = endDateTime.add(1, "day");
         }
-        while (startDateTime < endDateTime) {
-            const nextSlot = new Date(startDateTime.getTime() + intervalTime * 60000);
+        while (startDateTime.isBefore(endDateTime)) {
+            const nextSlot = startDateTime.add(intervalTime, "minute");
             schedulesData.push({
-                startDateTime: new Date(startDateTime),
-                endDateTime: nextSlot,
+                startDateTime: startDateTime.toDate(),
+                endDateTime: nextSlot.toDate(),
             });
             startDateTime = nextSlot;
         }
-        current.setDate(current.getDate() + 1);
+        current = current.add(1, "day");
     }
     const existingSchedules = await prisma.schedule.findMany({
         where: {
@@ -42,18 +40,23 @@ const createScheduleIntoDB = async (payload) => {
     const existingMap = new Set(existingSchedules.map((s) => s.startDateTime.getTime()));
     const newSchedules = schedulesData.filter((slot) => !existingMap.has(slot.startDateTime.getTime()));
     if (newSchedules.length === 0) {
-        throw new AppError(StatusCodes.CONFLICT, "এই সময়ের সকল শিডিউল আগে থেকেই বিদ্যমান!");
+        throw new AppError(StatusCodes.CONFLICT, "এই সময়ের সকল শিডিউল আগে থেকেই বিদ্যমান!");
     }
     await prisma.schedule.createMany({
         data: newSchedules,
         skipDuplicates: true,
     });
-    // সবশেষে ডাটা রিটার্ন
-    return await prisma.schedule.findMany({
+    const result = await prisma.schedule.findMany({
         where: {
-            OR: newSchedules.map((slot) => ({ startDateTime: slot.startDateTime })),
+            OR: newSchedules.map((slot) => ({
+                startDateTime: slot.startDateTime,
+            })),
         },
+        orderBy: {
+            startDateTime: 'asc'
+        }
     });
+    return result;
 };
 const getSchedulesFromDB = async (filters, options, user) => {
     const { limit, page, skip } = calculatePagination(options);

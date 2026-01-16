@@ -12,6 +12,9 @@ import { paymentRouter } from '../modules/payment/router.js';
 import { appoinmentRouter } from '../modules/Appoinment/router.js';
 import { prescriptionRouter } from '../modules/prescription/route.js';
 import { reviewRouter } from '../modules/review/route.js';
+import { MetaRoutes } from '../modules/meta/route.js';
+import { bloodDonateRoutes } from '../modules/bloodDonate/router.js';
+import { bloodRequestRoutes } from '../modules/bloodRequest/route.js';
 const routerPath = [
     {
         path: '/user',
@@ -58,8 +61,20 @@ const routerPath = [
         router: prescriptionRouter
     },
     {
+        path: "/meta-data",
+        router: MetaRoutes
+    },
+    {
         path: "/reivew",
         router: reviewRouter
+    },
+    {
+        path: "/blood-donate",
+        router: bloodDonateRoutes
+    },
+    {
+        path: "/blood-request",
+        router: bloodRequestRoutes
     }
 ];
 const router = Router();

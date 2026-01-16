@@ -15,4 +15,6 @@ router.post(
     paymentController.initPayment
 )
 
+// router.get('/my-payment' )
+
 export const paymentRouter = router;

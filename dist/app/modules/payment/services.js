@@ -5,7 +5,7 @@ import { StatusCodes } from "http-status-codes";
 import { PaymentStatus } from "@prisma/client";
 const initPayment = async (appoinmentId) => {
     const paymentData = await prisma.payment.findFirstOrThrow({
-        where: { id: appoinmentId },
+        where: { appointmentId: appoinmentId },
         include: {
             appointment: {
                 include: {
@@ -55,6 +55,10 @@ const validatePayment = async (payload) => {
         message: "Payment success!"
     };
 };
+// const myPayment = async(user: JwtPayload) => {
+//  await prisma.patient.findUniqueOrThrow({where: {id: user?.id,isDeleted: false}})
+//  const result = await prisma.payment.findMany({where: {}})
+// }
 export const paymentServices = {
     initPayment,
     validatePayment

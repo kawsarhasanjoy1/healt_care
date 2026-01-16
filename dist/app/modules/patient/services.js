@@ -153,10 +153,22 @@ const deletePatient = async (id) => {
     });
     return result;
 };
+const upPatiantDonateStatus = async (user) => {
+    return await prisma.$transaction(async (transactionClient) => {
+        const upDonorStatus = await transactionClient.patient.update({
+            where: { email: user?.email },
+            data: {
+                isDonor: true,
+            },
+        });
+        return upDonorStatus;
+    });
+};
 export const patientServices = {
     getPatients,
     getPatientById,
     updatePatient,
     softDeletePatient,
     deletePatient,
+    upPatiantDonateStatus
 };

@@ -3,6 +3,7 @@ import prisma from "../../../shared/prisma.js";
 import { patientSearchableFields } from "./constance.js";
 import { calculatePagination } from "../../../helpers/paginationHelpers.js";
 import { TPatientUpdate } from "./interface.js";
+import { JwtPayload } from "jsonwebtoken";
 
  const getPatients = async (filters: Record<string,any>, options: Record<string, any>) => {
  const {page,skip,limit} = calculatePagination(options)
@@ -190,10 +191,27 @@ const deletePatient = async (id: string): Promise<Patient | null> => {
   return result;
 };
 
+
+const upPatiantDonateStatus =  async (user: JwtPayload) => {
+  return await prisma.$transaction(async transactionClient => {
+    const upDonorStatus = await transactionClient.patient.update({
+      where: {email: user?.email},
+      data: {
+        isDonor: true,
+      },
+    });
+
+   
+
+    return upDonorStatus;
+  });
+}
+
 export const patientServices = {
     getPatients,
     getPatientById,
     updatePatient,
     softDeletePatient,
     deletePatient,
+    upPatiantDonateStatus
 }

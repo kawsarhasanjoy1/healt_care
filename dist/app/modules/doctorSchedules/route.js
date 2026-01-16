@@ -7,6 +7,7 @@ const router = Router();
 //     '/',
 //     auth(userRole.SUPER_ADMIN, userRole.ADMIN, userRole.DOCTOR, userRole.PATIANT));
 router.get('/my-schedule', auth(userRole.DOCTOR), doctorSchedulesController.getMySchedule);
+router.get('/', auth(userRole.SUPER_ADMIN, userRole.ADMIN, userRole.DOCTOR, userRole.PATIANT), doctorSchedulesController.getAllDoctorScheduleFromDB);
 router.post('/', auth(userRole.DOCTOR), doctorSchedulesController.createDoctorSchedules);
 router.delete('/:id', auth(userRole.DOCTOR), doctorSchedulesController.deleteFromDB);
 export const doctorSchedulesRouter = router;

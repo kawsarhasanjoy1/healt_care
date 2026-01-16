@@ -15,5 +15,12 @@ export default {
     forgot_expireIn: process.env.FORGOT_EXPIREIN,
     cloud_api_key: process.env.CLOUD_API_KEY,
     cloud_secret: process.env.CLOUD_SECRET,
-    cloud_name: process.env.CLOUD_NAME
+    cloud_name: process.env.CLOUD_NAME,
+    store_id: process.env.STORE_ID,
+    store_pass: process.env.STORE_PASS,
+    success_url: process.env.SUCCESS_URL,
+    fail_url: process.env.FAIL_URL,
+    cancel_url: process.env.CANCEL_URL,
+    ssl_payment_api: process.env.SSL_PAYMENT_API,
+    validation_api: process.env.VALIDATION_API
 };

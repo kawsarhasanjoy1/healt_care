@@ -5,6 +5,6 @@ import auth from "../../middleware/auth.js";
 import { userRole } from "@prisma/client";
 const router = Router();
 router.post("/", scheduleController.createSchedule);
-router.get("/", auth(userRole.DOCTOR), scheduleController.getSchedules);
+router.get("/", auth(userRole.DOCTOR, userRole.ADMIN, userRole.SUPER_ADMIN), scheduleController.getSchedules);
 router.delete("/:id", scheduleController.deleteSchedule);
 export const scheduleRouter = router;

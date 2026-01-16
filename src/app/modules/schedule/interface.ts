@@ -8,4 +8,5 @@ export type TSchedule = {
 export type TFilterRequest = {
     startDate?: string | undefined;
     endDate?: string | undefined;
+    doctorId?: string | undefined
 }

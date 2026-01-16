@@ -5,6 +5,8 @@ import sendResponse from "../../../shared/sendResponse.js";
 import { StatusCodes } from "http-status-codes";
 import { catchAsync } from "../../middleware/catchAsync.js";
 import { specialtiesServices } from "./services.js";
+import pick from "../../../shared/pick.js";
+import { paginationFields } from "../admin/constance.js";
 
 const createSpecialties = catchAsync(async(req: Request, res: Response) => {
 const result = await specialtiesServices.createSpecialties(req)
@@ -16,7 +18,9 @@ sendResponse(res,{
 })
 })
 const fetchSpecialties = catchAsync(async(req: Request, res: Response) => {
-const result = await specialtiesServices.fetchSpecialties()
+const filters = pick(req.query,['searchTerm']);
+const options = pick(req.query, paginationFields)
+const result = await specialtiesServices.fetchSpecialties(filters,options)
 
 sendResponse(res,{
     status: StatusCodes.OK,

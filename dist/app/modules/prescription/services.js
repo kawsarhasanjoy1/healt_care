@@ -6,7 +6,7 @@ import { calculatePagination } from "../../../helpers/paginationHelpers.js";
 const createPrescription = async (user, payload) => {
     const appointmentData = await prisma.appointment.findUniqueOrThrow({
         where: {
-            id: payload.appoinmentId,
+            id: payload.appointmentId,
             status: AppointmentStatus.COMPLETED,
             paymentStatus: PaymentStatus.PAID
         },
@@ -14,7 +14,8 @@ const createPrescription = async (user, payload) => {
             doctor: true
         }
     });
-    if (!(user?.email === appointmentData.doctor.email)) {
+    console.log(user);
+    if (!(user?.email === appointmentData?.doctor?.email)) {
         throw new AppError(StatusCodes.BAD_REQUEST, "This is not your appointment!");
     }
     ;
@@ -33,6 +34,7 @@ const createPrescription = async (user, payload) => {
     return result;
 };
 const getMyPrescription = async (user, options) => {
+    console.log(user);
     const { limit, skip, sortBy, sortOrder, page } = calculatePagination(options);
     const patientData = await prisma.prescription.findMany({
         where: {
@@ -42,7 +44,16 @@ const getMyPrescription = async (user, options) => {
         },
         skip,
         take: limit,
-        orderBy: sortBy && sortOrder ? { [options.sortBy]: options.sortOrder } : { createdAt: 'asc' }
+        orderBy: sortBy && sortOrder ? { [options.sortBy]: options.sortOrder } : { createdAt: 'asc' },
+        include: {
+            appointment: true,
+            doctor: true,
+            patient: {
+                include: {
+                    patientHealthData: true
+                }
+            }
+        }
     });
     const total = await prisma.prescription.count();
     return {

@@ -10,9 +10,12 @@ const createReview = async (user, payload) => {
     });
     const appoinmentData = await prisma.appointment.findUniqueOrThrow({
         where: {
-            id: payload.appoinmentId
+            id: payload.appointmentId
         }
     });
+    if (appoinmentData.status !== 'COMPLETED') {
+        throw new AppError(StatusCodes.BAD_REQUEST, "You cannot review before the appointment is completed");
+    }
     if (!(patientData.id === appoinmentData.patientId)) {
         throw new AppError(StatusCodes.BAD_REQUEST, "this is not your appoinment");
     }
@@ -88,7 +91,78 @@ const getReview = async (filters, options) => {
         data: result,
     };
 };
+const getMyReview = async (options, user) => {
+    const { limit, page, skip } = calculatePagination(options);
+    const result = await prisma.review.findMany({
+        where: {
+            patientId: user?.id,
+        },
+        skip,
+        take: limit,
+        orderBy: options.sortBy && options.sortOrder
+            ? { [options.sortBy]: options.sortOrder }
+            : {
+                createdAt: 'desc',
+            },
+        include: {
+            doctor: true,
+            patient: true,
+            appointment: true,
+        },
+    });
+    const total = await prisma.review.count({
+        where: {
+            patientId: user?.id,
+        },
+    });
+    return {
+        meta: {
+            total,
+            page,
+            limit,
+        },
+        data: result,
+    };
+};
+const getDoctorReview = async (options, user) => {
+    const { limit, page, skip } = calculatePagination(options);
+    const doctorInfo = await prisma.doctor.findFirstOrThrow({ where: {
+            email: user?.email
+        } });
+    const result = await prisma.review.findMany({
+        where: {
+            doctorId: doctorInfo?.id
+        },
+        skip,
+        take: limit,
+        orderBy: options.sortBy && options.sortOrder
+            ? { [options.sortBy]: options.sortOrder }
+            : {
+                createdAt: 'desc',
+            },
+        include: {
+            doctor: true,
+            patient: true,
+            appointment: true,
+        },
+    });
+    const total = await prisma.review.count({
+        where: {
+            patientId: user?.id,
+        },
+    });
+    return {
+        meta: {
+            total,
+            page,
+            limit,
+        },
+        data: result,
+    };
+};
 export const reviewServices = {
     createReview,
-    getReview
+    getReview,
+    getMyReview,
+    getDoctorReview
 };

@@ -21,24 +21,6 @@ const deleteDoctorSpecialty = async (doctorId, specialtiesId) => {
     });
     return result;
 };
-const getDoctorSpecialtiesByDoctor = async (doctorId) => {
-    const result = await prisma.doctorSpecialties.findMany({
-        where: { doctorId },
-        include: {
-            specialties: true,
-        },
-    });
-    return result;
-};
-const getDoctorSpecialtiesBySpecialty = async (specialtiesId) => {
-    const result = await prisma.doctorSpecialties.findMany({
-        where: { specialtiesId },
-        include: {
-            doctors: true,
-        },
-    });
-    return result;
-};
 const getAllDoctorSpecialties = async () => {
     const result = await prisma.doctorSpecialties.findMany({
         include: {
@@ -51,7 +33,5 @@ const getAllDoctorSpecialties = async () => {
 export const DoctorSpecialtiesService = {
     createDoctorSpecialty,
     deleteDoctorSpecialty,
-    getDoctorSpecialtiesByDoctor,
-    getDoctorSpecialtiesBySpecialty,
     getAllDoctorSpecialties,
 };

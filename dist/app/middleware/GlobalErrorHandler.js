@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
+import { AppError } from "./AppError.js";
 const globalErrorHandler = (err, req, res, next) => {
     let errorPayload = {
         statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
@@ -63,6 +64,13 @@ const globalErrorHandler = (err, req, res, next) => {
             statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
             message: "Database engine crashed.",
             code: "PRISMA_PANIC",
+        };
+    }
+    else if (err instanceof AppError) {
+        console.log(err.message);
+        errorPayload = {
+            statusCode: err.statusCode,
+            message: err.message,
         };
     }
     return res.status(errorPayload.statusCode).json({

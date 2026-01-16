@@ -15,10 +15,10 @@ const loginUser = async(payload: TLogin) => {
 const {email,password} = payload;
 const isExistUser = await prisma.users.findUnique({where: {email: email}})
 if (!isExistUser) {
-   throw new Error('This user is not found')
+   throw new AppError(StatusCodes.NOT_FOUND,'This user is not found')
 }
 const matchPass: boolean = await bcrypt.compare(password, isExistUser?.password)
-if (!matchPass) throw new Error('password dose not match')
+if (!matchPass) throw new AppError(StatusCodes.CONFLICT,'password dose not match')
 const userData = {
    id: isExistUser?.id,
    email: isExistUser?.email,

@@ -18,7 +18,7 @@ router.post('/create-admin',upload.single('file'), parseData, (req: Request,res:
 router.post('/create-doctor',upload.single('file'), parseData, (req: Request,res:Response,next:NextFunction) => {
         userZodValidationSchema.adminZodValidationSchema.parseAsync({body: req.body.doctor}) , next()} , userController.createDoctor)
 
-router.post(
+router.post(  
     "/create-patient",
     upload.single('file'),
     parseData, 

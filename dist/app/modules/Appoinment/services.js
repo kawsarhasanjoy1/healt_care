@@ -37,7 +37,7 @@ const createAppointment = async (user, payload) => {
                 schedule: true
             }
         });
-        await tx.doctorSchedules.update({
+        const docScdle = await tx.doctorSchedules.update({
             where: {
                 doctorId_scheduleId: {
                     doctorId: doctorData.id,
@@ -49,9 +49,10 @@ const createAppointment = async (user, payload) => {
                 appoinmentId: appointmentData.id
             }
         });
+        console.log(docScdle);
         // PH-HealthCare-datatime
         const today = new Date();
-        const transactionId = "health_care-" + today.getFullYear() + "-" + today.getMonth() + "-" + today.getDay() + "-" + today.getHours() + "-" + today.getMinutes();
+        const transactionId = "health_care-" + uuidv4();
         await tx.payment.create({
             data: {
                 appointmentId: appointmentData.id,
@@ -98,7 +99,7 @@ const getMyAppoinment = async (user, filters, options) => {
             ? { [options.sortBy]: options.sortOrder }
             : { createdAt: 'desc' },
         include: user?.role === userRole.PATIANT
-            ? { doctor: true, schedule: true } : { patient: { include: { medicalReports: true, patientHealthData: true } }, schedule: true }
+            ? { doctor: true, schedule: true, review: true } : { patient: { include: { medicalReports: true, patientHealthData: true } }, schedule: true }
     });
     const total = await prisma.appointment.count({
         where: whereConditions,
@@ -153,7 +154,8 @@ const getAppoinments = async (filters, options) => {
             },
         include: {
             doctor: true,
-            patient: true
+            patient: true,
+            review: true
         }
     });
     const total = await prisma.appointment.count({
@@ -191,7 +193,7 @@ const changeAppointmentStatus = async (appoinmentId, status, user) => {
     return result;
 };
 const cancelUnpaidAppoinment = async () => {
-    const tihrtyMinAgo = new Date(Date.now() - 1 * 60 * 1000);
+    const tihrtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
     const unpaidAppoinment = await prisma.appointment.findMany({
         where: {
             createdAt: {

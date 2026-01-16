@@ -5,7 +5,6 @@ import { DoctorServices } from "./services.js";
 import { Request, Response } from "express";
 import pick from "../../../shared/pick.js";
 import { doctorFiltarableFields } from "./constance.js";
-import { TPagination } from "../../../interface/global.js";
 
 
 const updateDoctor = catchAsync(async (req: Request, res: Response) => {

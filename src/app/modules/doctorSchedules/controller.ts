@@ -5,6 +5,7 @@ import sendResponse from "../../../shared/sendResponse.js";
 import { StatusCodes } from "http-status-codes";
 import { JwtPayload } from "jsonwebtoken";
 import pick from "../../../shared/pick.js";
+import { scheduleFilterableFields } from "./constance.js";
 
 const createDoctorSchedules = catchAsync(async(req:Request,res:Response) => {
     const user = req.user as JwtPayload;
@@ -19,7 +20,6 @@ const createDoctorSchedules = catchAsync(async(req:Request,res:Response) => {
 const getMySchedule = catchAsync(async (req: Request, res: Response) => {
     const filters = pick(req.query, ['startDate', 'endDate', 'isBooked']);
     const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder']);
-
     const user = req.user;
     const result = await doctorSchedulesServices.getMySchedule(filters, options, user);
 
@@ -27,6 +27,18 @@ const getMySchedule = catchAsync(async (req: Request, res: Response) => {
         status: StatusCodes.OK,
         message: "My Schedule fetched successfully!",
         data: result
+    });
+});
+
+const getAllDoctorScheduleFromDB = catchAsync(async (req: Request, res: Response) => {
+    const filters = pick(req.query, scheduleFilterableFields);
+    const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder']);
+    const result = await doctorSchedulesServices.getAllDoctorScheduleFromDB(filters, options);
+    sendResponse(res, {
+        status: StatusCodes.OK,
+        message: 'Doctor Schedule retrieval successfully',
+        meta: result.meta,
+        data: result.data,
     });
 });
 
@@ -47,5 +59,6 @@ const deleteFromDB = catchAsync(async (req: Request, res: Response) => {
 export const doctorSchedulesController = {
     createDoctorSchedules,
     getMySchedule,
+    getAllDoctorScheduleFromDB,
     deleteFromDB,
 }

@@ -5,9 +5,8 @@ import { Request,Response } from "express";
 import { paymentServices } from "./services.js";
 
 const initPayment = catchAsync(async (req: Request, res: Response) => {
-  const {appoinmentId} = req.params
- 
-  const result = await paymentServices.initPayment(appoinmentId)
+  const {appointmentId} = req.params
+  const result = await paymentServices.initPayment(appointmentId)
   sendResponse(res, {
     status: StatusCodes.OK,
     message: "Payment created successfully",
@@ -23,8 +22,17 @@ const validatePayment = catchAsync(async (req: Request, res: Response) => {
         data: result,
     });
 });
+// const myPayment = catchAsync(async (req: Request, res: Response) => {
+//     const result = await paymentServices.validatePayment(req.user);
+//     sendResponse(res, {
+//         status: StatusCodes.OK,
+//         message: 'My payment retried successfully',
+//         data: result,
+//     });
+// });
 
 export const paymentController = {
     initPayment,
-    validatePayment
+    validatePayment,
+    // myPayment
 }

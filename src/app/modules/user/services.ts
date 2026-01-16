@@ -12,36 +12,54 @@ import { Prisma, userStatus } from '@prisma/client';
 
 
 
-  const mapModel = {
-  [userRole.ADMIN] : prisma.admin,
-  [userRole.DOCTOR] : prisma.doctor,
-  [userRole.PATIANT] : prisma.patient,
-  [userRole.SUPER_ADMIN] : prisma.users,
-} as any;
 
+const getMe = async (payload: any) => {
+  const profileInfo = await prisma.users.findFirstOrThrow({
+    where: { id: payload?.id },
+  });
+  if (profileInfo?.role === "DOCTOR") {
+    const doctorInfo = await prisma.doctor.findUnique({
+      where: { email: profileInfo.email }, 
+      include: {
+        doctorSpecialties: { include: { specialties: true } },
+        user: true, 
+      },
+    });
 
-
-
-const getMe = async(payload: any) => {
-
-  const profileInfo = await prisma.users.findFirstOrThrow({where: {id: payload?.id}})
-  const model = mapModel[profileInfo?.role];
-  if (!model) {
-   throw new AppError(StatusCodes.CONFLICT,'invalid role');
+    return { ...profileInfo, ...doctorInfo };
   }
-  const userInfo = await model.findUnique({where: {email: profileInfo.email}})
-  return {...profileInfo,...userInfo}
-}
+
+  if (profileInfo?.role === userRole.PATIANT) {
+    const patientInfo = await prisma.patient.findUnique({
+      where: { email: profileInfo.email },
+      include: { user: true , patientHealthData: true, medicalReports: true}, 
+    });
+
+    return { ...profileInfo, ...patientInfo };
+  }
+
+
+  if (profileInfo?.role === userRole.ADMIN || profileInfo?.role === userRole.SUPER_ADMIN) {
+    const adminInfo = await prisma.admin.findUnique({
+      where: { email: profileInfo.email },
+      include: { user: true }, 
+    });
+
+    return { ...profileInfo, ...adminInfo };
+  }
+
+  throw new AppError(StatusCodes.CONFLICT, "invalid role");
+};
  
 
  const createAdmin = async (payload: TAdminPayload,file:TMulterFile | undefined) => {
   const { admin , password } = payload;
+
   if (file) {
     const cloudinary: TCloudinaryUploadResponse | any = await imageUploadeIntoCloudinary(file);
     payload.admin.profilePhoto = cloudinary.secure_url;
   }
   const hashPass = await bcrypt.hash(password, 10);
-
   const result = await prisma.$transaction(async (transactionClient: any) => {
     const user = await transactionClient.users.create({
       data: {
@@ -50,9 +68,8 @@ const getMe = async(payload: any) => {
         password: hashPass,
         profilePhoto: payload.admin.profilePhoto,
         contactNumber: admin.contactNumber,
-        needPasswordCng: admin.needPasswordCng,
         role: userRole.ADMIN,           
-        status: admin.status,           
+        status: userStatus.ACTIVE,           
       },
     });
 
@@ -158,8 +175,12 @@ const createPatient = async (payload: any, file?: TMulterFile) => {
 
 
 const userFromDB = async(query: Partial<TFilter | any>,options: Partial<TPagination>) => {
-    const {searchTerm, ...filter } = query;
-
+    const {searchTerm, ...rawFilter } = query;
+    const filter = Object.fromEntries(
+    Object.entries(rawFilter).filter(
+      ([, v]) => v !== "" && v !== undefined && v !== null
+    )
+  );
     const { page , limit, skip, sortOrder, sortBy} = calculatePagination(options);
     const andCondition = []
     if (searchTerm) {
@@ -180,7 +201,7 @@ const userFromDB = async(query: Partial<TFilter | any>,options: Partial<TPaginat
        })
     }
  
-    const whereCondition: Prisma.UsersWhereInput = { AND: andCondition };
+    const whereCondition: Prisma.UsersWhereInput = andCondition.length > 0 ? {AND: andCondition} : {};
     const result = await prisma.users.findMany({ where: whereCondition,
     select: {
       id: true,

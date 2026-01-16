@@ -4,10 +4,11 @@ import prisma from "../../../shared/prisma.js";
 import { AppError } from "../../middleware/AppError.js";
 import { StatusCodes } from "http-status-codes";
 import { PaymentStatus } from "@prisma/client";
+import { JwtPayload } from "jsonwebtoken";
 
 const initPayment = async(appoinmentId:string) => {
     const paymentData = await prisma.payment.findFirstOrThrow({
-        where: {id: appoinmentId},
+        where: {appointmentId: appoinmentId},
         include: {
             appointment: {
                 include: {
@@ -67,6 +68,11 @@ const response = payload;
 
 
 }
+
+// const myPayment = async(user: JwtPayload) => {
+//  await prisma.patient.findUniqueOrThrow({where: {id: user?.id,isDeleted: false}})
+//  const result = await prisma.payment.findMany({where: {}})
+// }
 
 export const paymentServices = {
     initPayment,

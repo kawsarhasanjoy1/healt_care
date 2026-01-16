@@ -7,20 +7,35 @@ import { userSearchableFields } from './constance.js';
 import { AppError } from '../../middleware/AppError.js';
 import { StatusCodes } from 'http-status-codes';
 import { userStatus } from '@prisma/client';
-const mapModel = {
-    [userRole.ADMIN]: prisma.admin,
-    [userRole.DOCTOR]: prisma.doctor,
-    [userRole.PATIANT]: prisma.patient,
-    [userRole.SUPER_ADMIN]: prisma.users,
-};
 const getMe = async (payload) => {
-    const profileInfo = await prisma.users.findFirstOrThrow({ where: { id: payload?.id } });
-    const model = mapModel[profileInfo?.role];
-    if (!model) {
-        throw new AppError(StatusCodes.CONFLICT, 'invalid role');
+    const profileInfo = await prisma.users.findFirstOrThrow({
+        where: { id: payload?.id },
+    });
+    if (profileInfo?.role === "DOCTOR") {
+        const doctorInfo = await prisma.doctor.findUnique({
+            where: { email: profileInfo.email },
+            include: {
+                doctorSpecialties: { include: { specialties: true } },
+                user: true,
+            },
+        });
+        return { ...profileInfo, ...doctorInfo };
     }
-    const userInfo = await model.findUnique({ where: { email: profileInfo.email } });
-    return { ...profileInfo, ...userInfo };
+    if (profileInfo?.role === userRole.PATIANT) {
+        const patientInfo = await prisma.patient.findUnique({
+            where: { email: profileInfo.email },
+            include: { user: true, patientHealthData: true, medicalReports: true },
+        });
+        return { ...profileInfo, ...patientInfo };
+    }
+    if (profileInfo?.role === userRole.ADMIN || profileInfo?.role === userRole.SUPER_ADMIN) {
+        const adminInfo = await prisma.admin.findUnique({
+            where: { email: profileInfo.email },
+            include: { user: true },
+        });
+        return { ...profileInfo, ...adminInfo };
+    }
+    throw new AppError(StatusCodes.CONFLICT, "invalid role");
 };
 const createAdmin = async (payload, file) => {
     const { admin, password } = payload;
@@ -37,9 +52,8 @@ const createAdmin = async (payload, file) => {
                 password: hashPass,
                 profilePhoto: payload.admin.profilePhoto,
                 contactNumber: admin.contactNumber,
-                needPasswordCng: admin.needPasswordCng,
                 role: userRole.ADMIN,
-                status: admin.status,
+                status: userStatus.ACTIVE,
             },
         });
         const adminRow = await transactionClient.admin.create({
@@ -120,7 +134,8 @@ const createPatient = async (payload, file) => {
     return result;
 };
 const userFromDB = async (query, options) => {
-    const { searchTerm, ...filter } = query;
+    const { searchTerm, ...rawFilter } = query;
+    const filter = Object.fromEntries(Object.entries(rawFilter).filter(([, v]) => v !== "" && v !== undefined && v !== null));
     const { page, limit, skip, sortOrder, sortBy } = calculatePagination(options);
     const andCondition = [];
     if (searchTerm) {
@@ -139,7 +154,7 @@ const userFromDB = async (query, options) => {
             }))
         });
     }
-    const whereCondition = { AND: andCondition };
+    const whereCondition = andCondition.length > 0 ? { AND: andCondition } : {};
     const result = await prisma.users.findMany({ where: whereCondition,
         select: {
             id: true,

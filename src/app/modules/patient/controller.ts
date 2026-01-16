@@ -8,6 +8,7 @@ import { patientFilterableFields } from "./constance.js";
 import { paginationFields } from "../admin/constance.js";
 
 
+
 const patientFromDB = catchAsync(async (req: Request, res: Response) => {
   const query = req.query;
   const filter = pick(query, patientFilterableFields)
@@ -77,6 +78,16 @@ const softDeletedIntoDB = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+const upPatiantDonateStatus = catchAsync(async (req: Request, res: Response) => {
+ const user = req.user as any;
+  const result = await patientServices.upPatiantDonateStatus(user);
+
+  sendResponse(res, {
+    status: StatusCodes.OK,
+    message: "Patient donate status updated successfully",
+    data: result,
+  });
+});
 
 export const patientController = {
   patientFromDB,
@@ -84,4 +95,5 @@ export const patientController = {
   updateIntoDB,
   deletedIntoDB,
   softDeletedIntoDB,
+  upPatiantDonateStatus
 };

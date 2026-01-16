@@ -60,10 +60,20 @@ const softDeletedIntoDB = catchAsync(async (req, res) => {
         data: result,
     });
 });
+const upPatiantDonateStatus = catchAsync(async (req, res) => {
+    const user = req.user;
+    const result = await patientServices.upPatiantDonateStatus(user);
+    sendResponse(res, {
+        status: StatusCodes.OK,
+        message: "Patient donate status updated successfully",
+        data: result,
+    });
+});
 export const patientController = {
     patientFromDB,
     getByIdFromDB,
     updateIntoDB,
     deletedIntoDB,
     softDeletedIntoDB,
+    upPatiantDonateStatus
 };

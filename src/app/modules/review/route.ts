@@ -7,6 +7,8 @@ const router = Router();
 
 router.post('/',auth(userRole.PATIANT), reviewController.createReview)
 router.get('/',auth(userRole.SUPER_ADMIN,userRole.ADMIN), reviewController.getReview)
+router.get('/my-review',auth(userRole.PATIANT), reviewController.getMyReview)
+router.get('/doctor-review',auth(userRole.DOCTOR), reviewController.getDoctorReview)
 
 
 export const reviewRouter = router

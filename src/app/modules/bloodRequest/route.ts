@@ -1,0 +1,32 @@
+import express from 'express';
+import { bloodRequestController } from './controller.js';
+import auth from '../../middleware/auth.js'; 
+import { userRole } from '@prisma/client';
+
+const router = express.Router();
+
+router.post(
+  '/create-blood-request',
+  auth(userRole.PATIANT), 
+  bloodRequestController.createBloodRequest
+);
+
+router.get(
+  '/my-request',
+  auth(userRole?.PATIANT),
+  bloodRequestController.getMyRequest
+);
+router.get(
+  '/incoming-blood-request',
+  auth(userRole?.PATIANT),
+  bloodRequestController.incomingBloodRequest
+);
+
+router.patch(
+  '/status/:requestId',
+  auth(userRole?.PATIANT),
+  bloodRequestController.upBloodRequestStatus
+);
+
+
+export const bloodRequestRoutes = router;

@@ -25,7 +25,29 @@ const getReview = catchAsync(async (req, res) => {
         data: result
     });
 });
+const getMyReview = catchAsync(async (req, res) => {
+    const options = pick(req.query, paginationFields);
+    const user = req?.user;
+    const result = await reviewServices.getMyReview(options, user);
+    sendResponse((res), {
+        status: StatusCodes.OK,
+        message: 'Review retried successful',
+        data: result
+    });
+});
+const getDoctorReview = catchAsync(async (req, res) => {
+    const options = pick(req.query, paginationFields);
+    const user = req?.user;
+    const result = await reviewServices.getDoctorReview(options, user);
+    sendResponse((res), {
+        status: StatusCodes.OK,
+        message: 'Doctor review retried successful',
+        data: result
+    });
+});
 export const reviewController = {
     createReview,
-    getReview
+    getReview,
+    getMyReview,
+    getDoctorReview
 };

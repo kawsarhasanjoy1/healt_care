@@ -17,6 +17,7 @@ const createSchedule = catchAsync(async (req, res) => {
 const getSchedules = catchAsync(async (req, res) => {
     const query = req.query;
     const user = req.user;
+    console.log(query, user);
     const filters = pick(query, scheduleFiltarableFields);
     const options = pick(query, paginationFields);
     const result = await scheduleServices.getSchedulesFromDB(filters, options, user);

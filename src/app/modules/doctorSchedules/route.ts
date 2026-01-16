@@ -14,9 +14,16 @@ router.get(
     auth(userRole.DOCTOR),doctorSchedulesController.getMySchedule
 )
 
+router.get(
+    '/',
+    auth(userRole.SUPER_ADMIN, userRole.ADMIN, userRole.DOCTOR, userRole.PATIANT),
+    doctorSchedulesController.getAllDoctorScheduleFromDB
+);
+
 router.post(
     '/',
-    auth(userRole.DOCTOR),doctorSchedulesController.createDoctorSchedules
+    auth(userRole.DOCTOR),
+    doctorSchedulesController.createDoctorSchedules
 );
 
 router.delete(

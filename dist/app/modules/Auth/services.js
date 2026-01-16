@@ -12,11 +12,11 @@ const loginUser = async (payload) => {
     const { email, password } = payload;
     const isExistUser = await prisma.users.findUnique({ where: { email: email } });
     if (!isExistUser) {
-        throw new Error('This user is not found');
+        throw new AppError(StatusCodes.NOT_FOUND, 'This user is not found');
     }
     const matchPass = await bcrypt.compare(password, isExistUser?.password);
     if (!matchPass)
-        throw new Error('password dose not match');
+        throw new AppError(StatusCodes.CONFLICT, 'password dose not match');
     const userData = {
         id: isExistUser?.id,
         email: isExistUser?.email,

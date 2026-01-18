@@ -19,7 +19,6 @@ const globalErrorHandler = (
     statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
     message: "Something went wrong.",
   };
-
   // Prisma known request errors
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     switch (err.code) {
@@ -87,7 +86,6 @@ const globalErrorHandler = (
       code: "PRISMA_PANIC",
     };}
   else if (err instanceof AppError) {
-    console.log(err.message)
     errorPayload = {
       statusCode: err.statusCode,
       message: err.message,

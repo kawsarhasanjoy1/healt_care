@@ -67,7 +67,6 @@ const globalErrorHandler = (err, req, res, next) => {
         };
     }
     else if (err instanceof AppError) {
-        console.log(err.message);
         errorPayload = {
             statusCode: err.statusCode,
             message: err.message,

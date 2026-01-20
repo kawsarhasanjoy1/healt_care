@@ -40,7 +40,7 @@ const createBloodRequest = async (payload, user) => {
         },
         include: { donor: true },
     });
-    await sendBloodRequestEmail(donorInfo?.email, patient?.name, donateInfo?.bloodGroup, "https://healt-care-frtd.vercel.app/dashboard/patiant/blood-request");
+    await sendBloodRequestEmail(donorInfo?.email, patient?.name, donateInfo?.bloodGroup, "http://localhost:3000/dashboard/patiant/blood-request");
     return newRequest;
 };
 const getMyRequest = async (user) => {

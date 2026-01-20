@@ -15,6 +15,7 @@ import { reviewRouter } from '../modules/review/route.js';
 import { MetaRoutes } from '../modules/meta/route.js';
 import { bloodDonateRoutes } from '../modules/bloodDonate/router.js';
 import { bloodRequestRoutes } from '../modules/bloodRequest/route.js';
+import { blogRouter } from '../modules/blog/route.js';
 const routerPath = [
     {
         path: '/user',
@@ -75,6 +76,10 @@ const routerPath = [
     {
         path: "/blood-request",
         router: bloodRequestRoutes
+    },
+    {
+        path: "/blogs",
+        router: blogRouter
     }
 ];
 const router = Router();

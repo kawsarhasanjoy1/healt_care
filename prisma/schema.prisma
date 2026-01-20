@@ -23,6 +23,7 @@ model Users {
   admin           Admin?
   doctor          Doctor?
   patient         Patient?
+  blogs           Blog[]
 }
 
 model Patient {
@@ -94,6 +95,7 @@ model Specialties {
   description       String              @default("No description provided")
   icon              String
   doctorSpecialties DoctorSpecialties[]
+  blogs             Blog[]
 
   @@index([title, description])
 }
@@ -251,18 +253,33 @@ model BloodDonate {
 model BloodRequest {
   id            String        @id @default(uuid())
   donorId       String
-  patientId     String        
+  patientId     String
   bloodDonateId String
   status        RequestStatus @default(PENDING)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
-  bloodDonate   BloodDonate   @relation("BloodDonateToRequest", fields: [bloodDonateId], references: [id])
-  donor         Patient       @relation("DonorRequests", fields: [donorId], references: [id])
-  patient       Patient       @relation("PatientRequests", fields: [patientId], references: [id])
+  bloodDonate BloodDonate @relation("BloodDonateToRequest", fields: [bloodDonateId], references: [id])
+  donor       Patient     @relation("DonorRequests", fields: [donorId], references: [id])
+  patient     Patient     @relation("PatientRequests", fields: [patientId], references: [id])
 
-  @@unique([patientId, bloodDonateId]) 
+  @@unique([patientId, bloodDonateId])
 }
+
+model Blog {
+  id            String      @id @default(uuid())
+  title         String
+  content       String      @db.Text
+  thumbnail     String
+  authorId      String
+  author        Users       @relation(fields: [authorId], references: [id])
+  specialtiesId String
+  category      Specialties @relation(fields: [specialtiesId], references: [id])
+  isPublished   Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
 enum userRole {
   SUPER_ADMIN
   ADMIN

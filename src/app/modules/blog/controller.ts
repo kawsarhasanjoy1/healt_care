@@ -4,6 +4,8 @@ import sendResponse from "../../../shared/sendResponse.js";
 import { StatusCodes } from "http-status-codes";
 import { blogServices } from "./services.js";
 import { TAuthUser } from "../../../interface/global.js";
+import pick from "../../../shared/pick.js";
+import { paginationFields } from "../admin/constance.js";
 
 const createBlog = catchAsync(async (req: Request, res: Response) => {
   const files = req.files as any;
@@ -20,25 +22,76 @@ const createBlog = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getAllBlogs = catchAsync(async (req: Request, res: Response) => {
-  const result = await blogServices.getAllBlogs(req.query);
+const getAllBlogs = catchAsync(
+  async (req: Request & { user?: any }, res: Response) => {
+    const user = req.user;
+    const query = req.query;
+    const filter = pick(query, ["title", "content"]);
+    const options = pick(query, paginationFields);
+    const result = await blogServices.getAllBlogs(filter, options, user);
+    sendResponse(res, {
+      status: StatusCodes.OK,
+
+      message: "ব্লগগুলো সফলভাবে আনা হয়েছে",
+      data: result,
+    });
+  }
+);
+const getAllPublicBlog = catchAsync(async (req: Request, res: Response) => {
+  const query = req.query;
+  const options = pick(query, paginationFields);
+  const result = await blogServices.getAllPublicBlog(options);
   sendResponse(res, {
     status: StatusCodes.OK,
-    message: "সব ব্লগ পাওয়া গেছে",
-    data: result,
-  });
-});
-const getSingleBlog = catchAsync(async (req: Request, res: Response) => {
-  const result = await blogServices.getSingleBlog(req.params.blogId);
-  sendResponse(res, {
-    status: StatusCodes.OK,
-    message: "সব ব্লগ পাওয়া গেছে",
+
+    message: "ব্লগগুলো সফলভাবে আনা হয়েছে",
     data: result,
   });
 });
 
-export const blogController = {
+const getSingleBlog = catchAsync(async (req: Request, res: Response) => {
+  const result = await blogServices.getSingleBlog(req.params.blogId);
+  sendResponse(res, {
+    status: StatusCodes.OK,
+
+    message: "ব্লগটি পাওয়া গিয়েছে",
+    data: result,
+  });
+});
+
+const updateBlog = catchAsync(
+  async (req: Request & { user?: any }, res: Response) => {
+    const { id } = req.params;
+    const user = req.user;
+    const result = await blogServices.updateBlog(id, req.body, user);
+    sendResponse(res, {
+      status: StatusCodes.OK,
+
+      message: "ব্লগটি আপডেট করা হয়েছে",
+      data: result,
+    });
+  }
+);
+
+const deleteBlog = catchAsync(
+  async (req: Request & { user?: any }, res: Response) => {
+    const { id } = req.params;
+    const user = req.user;
+    await blogServices.deleteBlog(id, user);
+    sendResponse(res, {
+      status: StatusCodes.OK,
+
+      message: "ব্লগটি মুছে ফেলা হয়েছে",
+      data: null,
+    });
+  }
+);
+
+export const blogControllers = {
   createBlog,
   getAllBlogs,
+  getAllPublicBlog,
   getSingleBlog,
+  updateBlog,
+  deleteBlog,
 };

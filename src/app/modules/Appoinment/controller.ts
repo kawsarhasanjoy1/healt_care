@@ -22,7 +22,6 @@ const createAppoinment = catchAsync(async (req: Request, res: Response) => {
 const getMyAppoinment = catchAsync(async (req: Request, res: Response) => {
   const user = req.user;
   const query = req.query;
-  console.log(query)
   const filters = pick(query,appointmentFilterableFields)
   const options = pick(query,paginationFields)
   const result = await AppoinmentServices.getMyAppoinment(user,filters,options)

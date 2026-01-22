@@ -274,7 +274,7 @@ model Blog {
   authorId      String
   author        Users       @relation(fields: [authorId], references: [id])
   specialtiesId String
-  category      Specialties @relation(fields: [specialtiesId], references: [id])
+  specialties      Specialties @relation(fields: [specialtiesId], references: [id])
   isPublished   Boolean     @default(false)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt

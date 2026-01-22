@@ -63,7 +63,7 @@ const createBloodRequest = async (
     donorInfo?.email,
     patient?.name,
     donateInfo?.bloodGroup,
-    "http://localhost:3000/dashboard/patiant/blood-request"
+    "https://healt-care-frtd.vercel.app/dashboard/patiant/blood-request"
   );
 
   return newRequest;
